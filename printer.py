@@ -9,8 +9,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image
 
+
+FONTSIZE = 7
 
 class SelectionInfo:
 
@@ -31,54 +33,120 @@ def main():
 
 def print_pdfs(filename, num_columns):
 
-	spaced_flag = True
+	spaced_flag = False
 	space_between_columns = .2
 
 	ncols = int(num_columns)
 	if spaced_flag:
 		ncols = ncols + ncols-1
 
-	doc = SimpleDocTemplate(filename, pagesize=letter)
+	doc = SimpleDocTemplate(filename, pagesize=letter, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
 
 	styles = getSampleStyleSheet()
 	styleN = styles["BodyText"]
 	styleN.alignment = TA_LEFT
+	styleN.fontSize = FONTSIZE
+
+	style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
+	style_right.fontSize = FONTSIZE
+	header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
+
+	header = []
+	barcode = Image("barcode1.jpg")
+	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
+	barcode.drawWidth = 2.25*inch
+
+	header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), \
+		[barcode, Paragraph('<b><font size=15>PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+	# header.append(["", ""])
+	#  
+	header = Table(header, colWidths=[inch*3, inch*4.5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), \
+		('TEXTFONT', (0, 0), (1, 0), 'Times-Roman'), \
+		('ALIGN',(1,0),(1,0),'RIGHT')])
+
 
 	results = []
-	for i in range(0, 30):
-		results.append(SelectionInfo("Presiding Judge Texas Supreme Court Place 3", "Randy H. Clemons", "DEM"));
+	races = [("President and Vice President", "Hillary Clinton / Tim Kaine", "DEM"),
+		("Representative, District 2", "James B. Veasaw", "LIB"),
+		("Railroad Commissioner", "Grady Yarbrough", "DEM"),
+		("Justice, Supreme Court, Place 3", "Rodolfo Rivera Munoz", "GP"),
+		("Justice, Supreme Court, Place 5", "Dori Contreras Garza", "GP"),
+		("Justice, Supreme Court, Place 9", "Savannah Robinson", "DEM"),
+		("Judge, Court of Criminal Appeals, Place 2", "Lawrence Larry Meyers", "DEM"),
+		("Judge, Court of Criminal Appeals, Place 5", "William Bryan Strange, III", "LIB"),
+		("Judge, Court of Criminal Appeals, Place 6", "Michael E. Keasler", "DEM"),
+		("Member, State Board of Education, District 6" , "Donna Bahorich", "REP"),
+		("State Senator, District 13" , "Borris L. Miles", "DEM"),
+		("State Representative, District 134" , "Gilberto \"Gil\" Velasquez Jr.", "LIB"),
+		("Chief Justice, 1st Court of Appeals" , "Sherry Radack", "REP"),
+		("Justice, 14th Court of Appeals District, Place 2" , "Candace White", "DEM"),
+		("Justice, 14th Court of Appeals District, Place 9" , "Tracy Elizabeth Christopher", "REP"),
+		("District Judge, 11th Judicial District", "Kristen Hawkins", "DEM"),
+		("District Judge, 61st Judicial District", "Erin Elizabeth Lunceford", "REP"),
+		("District Judge, 80th Judicial District", "Larry Weiman", "DEM"),
+		("District Judge, 125th Judicial District", "Sharon Hemphill", "REP"),
+		("District Judge, 127th Judicial District", "Sarahjane Swanson", "REP"),
+		("District Judge, 129th Judicial District", "Michael Gomez", "DEM"),
+		("District Judge, 133rd Judicial District", "Cindy Bennett Smith", "REP"),
+		("District Judge, 151st Judicial District", "Mike Englehart", "DEM"),
+		("District Judge, 152nd Judicial District", "Robert K. Schaffer", "DEM"),
+		("District Judge, 164th Judicial District", "Alexandra Smoots-Hogan", "DEM"),
+		("District Judge, 165th Judicial District", "Debra Ibarra Mayfield", "REP"),
+		("District Judge, 174th Judicial District", "Katherine McDaniel", "REP"),
+		("District Judge, 176th Judicial District", "Nikita \"Niki\" Harmon", "DEM"),
+		("District Judge, 177th Judicial District", "Robert	Johnson", "DEM"),
+		("District Judge, 178th Judicial District", "Phil Gommels", "REP"),
+		("District Judge, 179th Judicial District", "Kristin M. Guiney", "REP"),
+		("District Judge, 215th Judicial District", "Fred Schuchart", "REP"),
+		("District Judge, 333rd Judicial District", "Joseph \"Tad\"	Halbach", "REP"),
+		("District Judge, 334th Judicial District", "Steven Kirkland", "DEM"),
+		("District Judge, 337th Judicial District", "Renee Magee", "REP"),
+		("District Judge, 338th Judicial District", "Ramona Franklin", "DEM"),
+		("District Judge, 339th Judicial District", "Maria T. (Terri) Jackson", "DEM"),
+		("District Judge, 351st Judicial District", "Mark Kent Ellis", "REP"),
+		("District Judge, 507th Judicial District", "Julia Maldonado", "DEM"),
+		("District Attorney", "Devon Anderson", "REP"),
+		("Judge, County Civil Court at Law No. 1 (Unexpired Term)", "Clyde Raymond Leuchtag", "REP"),
+		("Judge, County Criminal Court No. 16", "Darrell William Jordan", "DEM"),
+		("County Attorney", "Jim Leitner", "REP"),
+		("Sheriff", "Ed Gonzalez", "DEM"),
+		("County Tax Assessor-Collector", "Ann Harris Bennett", "DEM"),
+		("County Commissioner, Precinct 1", "Rodney Ellis", "DEM"),
+		("Justice of the Peace, Precinct 1, Place 1", "Eric William Carter", "DEM"),
+		("Constable, Precint 1", "Joe Danna", "REP"),
+		("Houston I.S.D., Proposition 1", "AGAINST", "")]
+
+	results = []
+	for item in races:
+		results.append(SelectionInfo(item[0], item[1], item[2]))
 
 	num_rows = len(results)/int(num_columns)
 
-	data = []
+
+	data = [[]]
 	candidate_index = 0
-	style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 
-	for i in range(num_rows):
-		new_row = []
-		for j in range(ncols):
+	for i in range(ncols):
+		new_col = []
+		for j in range(num_rows):
 
-			if spaced_flag and j % 2 == 1:
-				new_row.append("  ")
+			race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
+			selection_name = Paragraph(results[candidate_index].selection, styleN)
+			party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
 
-			else:
-				# Table for each race
-				race_name = Paragraph("<b>"+results[i].race_name+"</b>", styleN)
-				selection_name = results[i].selection
-				party = Paragraph("<b>"+results[i].party+"</b>", style_right)
+			race_data = [[race_name], [selection_name, party]]
 
-				race_data = [[race_name], [selection_name, party]]
+			race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
+				style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
 
-				race_table = Table(race_data,style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black)])
-				# selection = Paragraph("<b>" + results[i].race_name+ "</b><br/>" + "\n" + results[i].selection, styleN)
-				new_row.append(race_table)
-				candidate_index += 1
+			new_col.append([race_table])
+			candidate_index += 1
 
 			if candidate_index >= len(results):
 				break
-		data.append(new_row)
-		if candidate_index >= len(results):
-				break
+
+		col_table = Table(new_col)
+		data[0].append(col_table)
 
 	column_widths = []
 	if spaced_flag:
@@ -92,11 +160,22 @@ def print_pdfs(filename, num_columns):
 
 		print (int(num_columns)-1)*space_between_columns + column_size*int(num_columns)
 	else:
-		column_widths = [7.5*inch/ncols] * ncols
+		column_widths = [8*inch/ncols] * ncols
 
-	t=Table(data,colWidths=inch*7.5/len(data[0]), style=[])
+	t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')])
+
+
+	# c = canvas.Canvas(filename, pagesize=A4)
+	# c.setFont("Times-Roman", 40)
+
+	# table.wrapOn(c, width, height)
+	# table.drawOn(c, *coord(1.8, 9.6, cm))
+
+
+	# c.save()
 
 	elements = []
+	elements.append(header)
 	elements.append(t)
 
 	doc.build(elements)
@@ -105,17 +184,6 @@ def print_pdfs(filename, num_columns):
 	# c.setFillColor(red)
 	# # c.drawCentredString(2.75*inch, 2.5*inch, "Font size examples")
 	# c.setFillColor(magenta)
-
-	# lyrics = ["hi", "hello", "goodbye", "hi"]
-	# size = 7
-	# y = 2.3*inch
-	# x = 1.3*inch
-	# for line in lyrics:
-	# 	c.setFont("Helvetica", size)
-	# 	c.drawRightString(x,y,"%s points: " % size)
-	# 	c.drawString(x,y, line)
-	# 	y = y-size*1.2
-	# 	size = size+1.5
 
  	# c.showPage()
  	# c.save()
