@@ -1,4 +1,5 @@
 import sys
+import math
 from sys import argv
 
 from reportlab.lib import colors
@@ -9,7 +10,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageBreak
 
 
 FONTSIZE = 7
@@ -23,9 +24,9 @@ class SelectionInfo:
 
 
 def main():
-	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile of voters to format to PDF\n\tnum_columns\tnumber of columns for PDF\n'
+	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 3:
-	    print usage
+	    print(usage)
 	elif len(argv) == 3:
 		# print PDFs
 		print_pdfs(argv[1], argv[2])
@@ -33,12 +34,7 @@ def main():
 
 def print_pdfs(filename, num_columns):
 
-	spaced_flag = False
-	space_between_columns = .2
-
 	ncols = int(num_columns)
-	if spaced_flag:
-		ncols = ncols + ncols-1
 
 	doc = SimpleDocTemplate(filename, pagesize=letter, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
 
@@ -55,6 +51,9 @@ def print_pdfs(filename, num_columns):
 	barcode = Image("barcode1.jpg")
 	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
 	barcode.drawWidth = 2.25*inch
+	barcode.hAlign = 'LEFT'
+	barcode.vAlign = 'BOTTOM'
+
 
 	header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), \
 		[barcode, Paragraph('<b><font size=15>PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
@@ -120,73 +119,62 @@ def print_pdfs(filename, num_columns):
 	for item in races:
 		results.append(SelectionInfo(item[0], item[1], item[2]))
 
-	num_rows = len(results)/int(num_columns)
+	#num_rows = math.ceil(len(results)/int(num_columns))
+	num_rows = 15
 
 
-	data = [[]]
+	
 	candidate_index = 0
+	column_index = 0
 
-	for i in range(ncols):
-		new_col = []
-		for j in range(num_rows):
+	num_colums_total = math.ceil(len(races)/num_rows)
+	num_pages_total = math.ceil(num_colums_total/ncols)
 
-			race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
-			selection_name = Paragraph(results[candidate_index].selection, styleN)
-			party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
+	print("num cols total %i, num pages total %i" %(num_colums_total, num_pages_total))
 
-			race_data = [[race_name], [selection_name, party]]
-
-			race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
-				style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
-
-			new_col.append([race_table])
-			candidate_index += 1
-
-			if candidate_index >= len(results):
-				break
-
-		col_table = Table(new_col)
-		data[0].append(col_table)
-
-	column_widths = []
-	if spaced_flag:
-		column_size = (7.5 - (int(num_columns)-1)*space_between_columns) / int(num_columns)
-
-		for i in range(ncols + ncols-1):
-			if i % 2 == 1:
-				column_widths.append(inch*space_between_columns)
-			else:
-				column_widths.append(inch*column_size)
-
-		print (int(num_columns)-1)*space_between_columns + column_size*int(num_columns)
-	else:
-		column_widths = [8*inch/ncols] * ncols
-
-	t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')])
-
-
-	# c = canvas.Canvas(filename, pagesize=A4)
-	# c.setFont("Times-Roman", 40)
-
-	# table.wrapOn(c, width, height)
-	# table.drawOn(c, *coord(1.8, 9.6, cm))
-
-
-	# c.save()
 
 	elements = []
-	elements.append(header)
-	elements.append(t)
+
+	for page in range(num_pages_total):
+		data = [[]]
+
+		for i in range(ncols):
+			new_col = []
+			for j in range(num_rows):
+
+				race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
+				selection_name = Paragraph(results[candidate_index].selection, styleN)
+				party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
+
+				race_data = [[race_name], [selection_name, party]]
+
+				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
+					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
+
+				new_col.append([race_table])
+				candidate_index += 1
+
+				if candidate_index >= len(results):
+					break
+
+			col_table = Table(new_col)
+			data[0].append(col_table)
+			column_index += 1
+			if column_index >= num_colums_total:
+					break
+
+		column_widths = [8*inch/ncols] * ncols
+
+		t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')],hAlign='LEFT')
+		
+		elements.append(header)
+		elements.append(t)
+		#TODO: ensure this barcode is aligned to bottom of page, for example see 3 col with 59 races
+		elements.append(barcode)
+		elements.append(PageBreak())
+		
 
 	doc.build(elements)
-
-	# c.setFont("Times-Roman", 20)
-	# c.setFillColor(red)
-	# # c.drawCentredString(2.75*inch, 2.5*inch, "Font size examples")
-	# c.setFillColor(magenta)
-
- 	# c.showPage()
- 	# c.save()
 
 
 main()
