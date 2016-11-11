@@ -14,9 +14,20 @@ from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageBreak
 
+"""
+1) create a way to read race info from a file
+	what type of file? STAR link in here?
+2) anchor barcode in bottom left
+3) make num_rows depend on amount of text 
+	can we check the height of paragraph to determine when a col gets too long
+4) look into human testing readability limits and consider making chart
+5) finish config file setup
+6) create documentation
+
+"""
 
 
-FONTSIZE = 7
+FONTSIZE = 0
 
 class SelectionInfo:
 
