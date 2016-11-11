@@ -1,16 +1,19 @@
 import sys
 import math
+import ConfigParser
+
 from sys import argv
 
 from reportlab.lib import colors
 from reportlab.lib.colors import magenta, red
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, legal
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageBreak
+
 
 
 FONTSIZE = 7
@@ -34,17 +37,28 @@ def main():
 
 def print_pdfs(filename, num_columns):
 
+	config = ConfigParser.ConfigParser()
+	config.read('config.cfg')
+	page_size = config.get('Paper', 'size')
+	font_size = config.getint('Fonts', 'font_size')
+	font_type = config.get('Fonts', 'font_type')
+
+	page_type = letter
+	if page_size == 'Legal':
+		page_type = legal
+
+
 	ncols = int(num_columns)
 
-	doc = SimpleDocTemplate(filename, pagesize=letter, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
+	doc = SimpleDocTemplate(filename, pagesize=page_type, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
 
 	styles = getSampleStyleSheet()
 	styleN = styles["BodyText"]
 	styleN.alignment = TA_LEFT
-	styleN.fontSize = FONTSIZE
+	styleN.fontSize = font_size
 
 	style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
-	style_right.fontSize = FONTSIZE
+	style_right.fontSize = font_size
 	header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 
 	header = []
@@ -60,7 +74,7 @@ def print_pdfs(filename, num_columns):
 	# header.append(["", ""])
 	#  
 	header = Table(header, colWidths=[inch*3, inch*4.5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), \
-		('TEXTFONT', (0, 0), (1, 0), 'Times-Roman'), \
+		('TEXTFONT', (0, 0), (1, 0), font_type), \
 		('ALIGN',(1,0),(1,0),'RIGHT')])
 
 
@@ -120,7 +134,7 @@ def print_pdfs(filename, num_columns):
 		results.append(SelectionInfo(item[0], item[1], item[2]))
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
-	num_rows = 15
+	num_rows = 12
 
 
 	
@@ -135,7 +149,7 @@ def print_pdfs(filename, num_columns):
 
 	elements = []
 
-	for page in range(num_pages_total):
+	for page in range(int(num_pages_total)):
 		data = [[]]
 
 		for i in range(ncols):
