@@ -2,17 +2,21 @@ import sys
 import math
 import ConfigParser
 
-from sys import argv
 
 from reportlab.lib import colors
 from reportlab.lib.colors import magenta, red
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.pagesizes import letter, legal
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageBreak, Frame, PageTemplate, NextPageTemplate
+from sys import argv
+from reportlab.lib.units import mm
+from functools import partial
 
 """
 1) create a way to read race info from a file
@@ -25,6 +29,37 @@ from reportlab.platypus import SimpleDocTemplate, Table, Paragraph, Image, PageB
 6) create documentation
 
 """
+
+styles = getSampleStyleSheet()
+styleN = styles["BodyText"]
+styleN.alignment = TA_LEFT
+
+page_size = letter
+font_size = 7
+font_type = 'Times-Roman'
+ 
+def header_footer(canvas, doc):
+    canvas.saveState()
+    # Footer
+    barcode = Image("barcode1.jpg")
+    barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
+    barcode.drawWidth = 2.25*inch
+    barcode.hAlign = 'LEFT'
+    barcode.vAlign = 'BOTTOM'
+
+    w, h = barcode.wrap(doc.width, doc.bottomMargin)
+    barcode.drawOn(canvas, doc.leftMargin + 15, h)
+
+    # Header
+    header = []
+    header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
+    header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15>PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+    header = Table(header, colWidths=[inch*3, inch*5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), ('TEXTFONT', (0, 0), (1, 0), font_type), ('ALIGN',(1,0),(1,0),'RIGHT')])
+
+    w, h = header.wrap(doc.width, doc.topMargin)
+    header.drawOn(canvas, doc.leftMargin + 15, doc.height + doc.topMargin - h)
+
+    canvas.restoreState()
 
 
 FONTSIZE = 0
@@ -54,6 +89,8 @@ def print_pdfs(filename, num_columns):
 	font_size = config.getint('Fonts', 'font_size')
 	font_type = config.get('Fonts', 'font_type')
 
+	styleN.fontSize = font_size
+
 	page_type = letter
 	if page_size == 'Legal':
 		page_type = legal
@@ -63,32 +100,10 @@ def print_pdfs(filename, num_columns):
 
 	doc = SimpleDocTemplate(filename, pagesize=page_type, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
 
-	styles = getSampleStyleSheet()
-	styleN = styles["BodyText"]
-	styleN.alignment = TA_LEFT
-	styleN.fontSize = font_size
-
 	style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 	style_right.fontSize = font_size
-	header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 
-	header = []
-	barcode = Image("barcode1.jpg")
-	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
-	barcode.drawWidth = 2.25*inch
-	barcode.hAlign = 'LEFT'
-	barcode.vAlign = 'BOTTOM'
-
-
-	header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), \
-		[barcode, Paragraph('<b><font size=15>PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
-	# header.append(["", ""])
-	#  
-	header = Table(header, colWidths=[inch*3, inch*4.5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), \
-		('TEXTFONT', (0, 0), (1, 0), font_type), \
-		('ALIGN',(1,0),(1,0),'RIGHT')])
-
-
+	
 	results = []
 	races = [("President and Vice President", "Hillary Clinton / Tim Kaine", "DEM"),
 		("Representative, District 2", "James B. Veasaw", "LIB"),
@@ -158,6 +173,10 @@ def print_pdfs(filename, num_columns):
 	print("num cols total %i, num pages total %i" %(num_colums_total, num_pages_total))
 
 
+	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-20*mm, id='normal2')
+	template = PageTemplate(id='header_footer', frames=frame, onPage=header_footer)
+	doc.addPageTemplates([template])
+
 	elements = []
 
 	for page in range(int(num_pages_total)):
@@ -192,16 +211,16 @@ def print_pdfs(filename, num_columns):
 
 		t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')],hAlign='LEFT')
 		
-		elements.append(header)
+		#elements.append(header)
 		elements.append(t)
 		#TODO: ensure this barcode is aligned to bottom of page, for example see 3 col with 59 races
-		elements.append(barcode)
+		#elements.append(barcode)
+		elements.append(NextPageTemplate('header_footer'))
 		elements.append(PageBreak())
-		
 
+	#doc.addPageTemplates([template])
+
+	#doc.build(elements, onFirstPage=self._header_footer, onLaterPages=self._header_footer, canvasmaker=NumberedCanvas)
 	doc.build(elements)
 
-
 main()
-
-
