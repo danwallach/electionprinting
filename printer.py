@@ -76,20 +76,23 @@ class SelectionInfo:
 
 def main():
 	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n\traces_filename\tsemi-colon delimited list of race results\n'
-	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 4:
+	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
 	elif len(argv) == 4:
 		# print PDFs
-		print_pdfs(argv[1], argv[2], argv[3])
+		print_pdfs(argv[1])
 
 
-def print_pdfs(filename, num_columns, races):
+def print_pdfs(filename):
+	global font_size
 
 	config = ConfigParser.ConfigParser()
 	config.read('config.cfg')
 	page_size = config.get('Paper', 'size')
 	font_size = config.getint('Fonts', 'font_size')
 	font_type = config.get('Fonts', 'font_type')
+	num_columns = config.get('Columns', 'num_columns')
+	races = config.get('Races', 'filename')
 
 	styleN.fontSize = font_size
 
