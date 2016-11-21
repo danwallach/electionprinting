@@ -19,16 +19,12 @@ from reportlab.lib.units import mm
 from functools import partial
 
 """
-1) create a way to read race info from a file
 
-	what type of file? STAR link in here?
-
-2) anchor barcode in bottom left
-3) make num_rows depend on amount of text 
+1) make num_rows depend on amount of text 
 	can we check the height of paragraph to determine when a col gets too long
-4) look into human testing readability limits and consider making chart
-5) finish config file setup
-6) create documentation
+2) decide what is reasonable in config file
+3) look into human testing readability limits and consider making chart
+4) create documentation
 
 """
 
@@ -147,7 +143,7 @@ def print_pdfs(filename, num_columns, races):
 
 				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
 					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
-
+				print(race_table.wrap(0,0))
 				new_col.append([race_table])
 				candidate_index += 1
 
