@@ -1,6 +1,9 @@
 import sys
 import math
-import ConfigParser
+try:
+	from configparser import ConfigParser
+except:
+	from ConfigParser import ConfigParser
 
 
 from reportlab.lib import colors
@@ -74,7 +77,7 @@ def main():
 	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n\traces_filename\tsemi-colon delimited list of race results\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
-	elif len(argv) == 4:
+	else:
 		# print PDFs
 		print_pdfs(argv[1])
 
@@ -82,7 +85,7 @@ def main():
 def print_pdfs(filename):
 	global font_size
 
-	config = ConfigParser.ConfigParser()
+	config = ConfigParser()
 	config.read('config.cfg')
 	page_size = config.get('Paper', 'size')
 	font_size = config.getint('Fonts', 'font_size')
@@ -112,17 +115,13 @@ def print_pdfs(filename):
 		results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
-	num_rows = 12
+	#num_rows = 12
 
-
+	print(len(results))
 	
 	candidate_index = 0
-	column_index = 0
 
-	num_colums_total = math.ceil(len(results)/num_rows + 1)
-	num_pages_total = math.ceil(num_colums_total/ncols)
-
-	print("num cols total %i, num pages total %i" %(num_colums_total, num_pages_total))
+	#num_colums_total = math.ceil(len(results)/num_rows + 1)
 
 
 	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-20*mm, id='normal2')
@@ -130,14 +129,16 @@ def print_pdfs(filename):
 	doc.addPageTemplates([template])
 
 	elements = []
+	entries = 0
+	while entries < len(races):
 
-	for page in range(int(num_pages_total)):
 		data = [[]]
 
 		for i in range(ncols):
 			new_col = []
-			for j in range(num_rows):
-
+			tot_h = 0
+			while tot_h < 500:
+				
 				race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
 				selection_name = Paragraph(results[candidate_index].selection, styleN)
 				party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
@@ -146,20 +147,20 @@ def print_pdfs(filename):
 
 				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
 					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
-				print(race_table.wrap(0,0))
+				w,h = race_table.wrap(0,0)
+				tot_h += h
 				new_col.append([race_table])
 				candidate_index += 1
-
-				if candidate_index >= len(results):
+				entries += 1
+				print("len: {}, candidate_index: {}".format(len(results), candidate_index))
+				if candidate_index >= (len(results) - 1):
+					print("broken")
 					break
-
-
 			col_table = Table(new_col)
 			data[0].append(col_table)
-			column_index += 1
-			if column_index >= num_colums_total:
+			if candidate_index >= (len(results) - 1):
 				break
-
+			
 		column_widths = [8*inch/ncols] * ncols
 
 		t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')],hAlign='LEFT')
@@ -170,7 +171,7 @@ def print_pdfs(filename):
 		#elements.append(barcode)
 		elements.append(NextPageTemplate('header_footer'))
 		elements.append(PageBreak())
-
+		
 	#doc.addPageTemplates([template])
 
 	#doc.build(elements, onFirstPage=self._header_footer, onLaterPages=self._header_footer, canvasmaker=NumberedCanvas)
