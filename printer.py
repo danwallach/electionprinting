@@ -18,6 +18,8 @@ from sys import argv
 from reportlab.lib.units import mm
 from functools import partial
 
+
+
 """
 1) create a way to read race info from a file
 
@@ -78,13 +80,13 @@ def main():
 	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n\traces_filename\tsemi-colon delimited list of race results\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
-	elif len(argv) == 4:
+	elif len(argv) == 2:
 		# print PDFs
 		print_pdfs(argv[1])
 
 
 def print_pdfs(filename):
-	global font_size
+	global font_size, font_type
 
 	config = ConfigParser.ConfigParser()
 	config.read('config.cfg')
