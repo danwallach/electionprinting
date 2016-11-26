@@ -76,7 +76,7 @@ class SelectionInfo:
 
 
 def main():
-	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n\traces_filename\tsemi-colon delimited list of race results\n'
+	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
 	else:
@@ -114,6 +114,8 @@ def print_pdfs(filename):
 	f = open(races, "r")
 	for item in f.readlines():
 		item = item.split(";")
+		if len(item) < 3:
+			continue
 		results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
@@ -132,12 +134,12 @@ def print_pdfs(filename):
 
 	elements = []
 	entries = 0
-	print len(results)
+	print(len(results))
 	while entries < len(results):
 
 		data = [[]]
 
-		print 'entries: ' + str(entries)
+		print('entries: ' + str(entries))
 
 		for i in range(ncols):
 			new_col = []
@@ -164,7 +166,7 @@ def print_pdfs(filename):
 			col_table = Table(new_col)
 			data[0].append(col_table)
 			if candidate_index > (len(results) - 1):
-				print 'candidate_index >= len results: ' + str(candidate_index)
+				print('candidate_index >= len results: ' + str(candidate_index))
 				break
 			
 		column_widths = [8*inch/ncols] * ncols
