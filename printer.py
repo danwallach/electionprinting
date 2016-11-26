@@ -1,6 +1,9 @@
 import sys
 import math
-import ConfigParser
+try:
+	from configparser import ConfigParser
+except:
+	from ConfigParser import ConfigParser
 
 
 from reportlab.lib import colors
@@ -21,16 +24,12 @@ from functools import partial
 
 
 """
-1) create a way to read race info from a file
 
-	what type of file? STAR link in here?
-
-2) anchor barcode in bottom left
-3) make num_rows depend on amount of text 
+1) make num_rows depend on amount of text 
 	can we check the height of paragraph to determine when a col gets too long
-4) look into human testing readability limits and consider making chart
-5) finish config file setup
-6) create documentation
+2) decide what is reasonable in config file
+3) look into human testing readability limits and consider making chart
+4) create documentation
 
 """
 
@@ -80,7 +79,7 @@ def main():
 	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n\tnum_columns\tnumber of columns for PDF\n\traces_filename\tsemi-colon delimited list of race results\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
-	elif len(argv) == 2:
+	else:
 		# print PDFs
 		print_pdfs(argv[1])
 
@@ -88,7 +87,7 @@ def main():
 def print_pdfs(filename):
 	global font_size, font_type
 
-	config = ConfigParser.ConfigParser()
+	config = ConfigParser()
 	config.read('config.cfg')
 	page_size = config.get('Paper', 'size')
 	font_size = config.getint('Fonts', 'font_size')
@@ -118,17 +117,13 @@ def print_pdfs(filename):
 		results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
-	num_rows = 12
+	#num_rows = 12
 
-
+	print(len(results))
 	
 	candidate_index = 0
-	column_index = 0
 
-	num_colums_total = math.ceil(len(results)/num_rows + 1)
-	num_pages_total = math.ceil(num_colums_total/ncols)
-
-	print("num cols total %i, num pages total %i" %(num_colums_total, num_pages_total))
+	#num_colums_total = math.ceil(len(results)/num_rows + 1)
 
 
 	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-20*mm, id='normal2')
@@ -136,36 +131,42 @@ def print_pdfs(filename):
 	doc.addPageTemplates([template])
 
 	elements = []
+	entries = 0
+	print len(results)
+	while entries < len(results):
 
-	for page in range(int(num_pages_total)):
 		data = [[]]
+
+		print 'entries: ' + str(entries)
 
 		for i in range(ncols):
 			new_col = []
-			for j in range(num_rows):
-
+			tot_h = 0
+			while tot_h < 500:
+				
 				race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
 				selection_name = Paragraph(results[candidate_index].selection, styleN)
 				party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
 
 				race_data = [[race_name], [selection_name, party]]
 
-				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*8/32], \
+				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*9/32], \
 					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
-
+				w,h = race_table.wrap(0,0)
+				tot_h += h
 				new_col.append([race_table])
 				candidate_index += 1
-
-				if candidate_index >= len(results):
+				entries += 1
+				print("len: {}, candidate_index: {}".format(len(results), candidate_index))
+				if candidate_index > (len(results) - 1):
+					print("broken")
 					break
-
-
 			col_table = Table(new_col)
 			data[0].append(col_table)
-			column_index += 1
-			if column_index >= num_colums_total:
+			if candidate_index > (len(results) - 1):
+				print 'candidate_index >= len results: ' + str(candidate_index)
 				break
-
+			
 		column_widths = [8*inch/ncols] * ncols
 
 		t=Table(data,colWidths=inch*8/ncols, style=[('VALIGN',(0,0), (-1, -1), 'TOP')],hAlign='LEFT')
@@ -176,7 +177,7 @@ def print_pdfs(filename):
 		#elements.append(barcode)
 		elements.append(NextPageTemplate('header_footer'))
 		elements.append(PageBreak())
-
+		
 	#doc.addPageTemplates([template])
 
 	#doc.build(elements, onFirstPage=self._header_footer, onLaterPages=self._header_footer, canvasmaker=NumberedCanvas)
