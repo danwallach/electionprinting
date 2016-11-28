@@ -31,6 +31,9 @@ from functools import partial
 3) look into human testing readability limits and consider making chart
 4) create documentation
 
+THOUGHTS: can we be more descriptive with the invalid input statement
+	 i.e decrease num_columns, adjust font_size?
+
 """
 
 styles = getSampleStyleSheet()
@@ -76,7 +79,7 @@ class SelectionInfo:
 
 
 def main():
-	usage = 'Command Syntax: \n\t./printer input_filename num_columns\nArguments:\n\tinput_filename\tfile to save results to\n'
+	usage = 'Command Syntax: \n\t./printer input_filename\nArguments:\n\tinput_filename\tfile to save results to\n'
 	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
 	    print(usage)
 	else:
@@ -111,12 +114,16 @@ def print_pdfs(filename):
 
 
 	results = []
-	f = open(races, "r")
-	for item in f.readlines():
-		item = item.split(";")
-		if len(item) < 3:
-			continue
-		results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
+	try:
+		f = open(races, "r")
+		for item in f.readlines():
+			item = item.split(";")
+			if len(item) < 3:
+				continue
+			results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
+	except:
+		print("Unable to read Races file: "+ str(races))
+
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
 	#num_rows = 12
@@ -183,6 +190,10 @@ def print_pdfs(filename):
 	#doc.addPageTemplates([template])
 
 	#doc.build(elements, onFirstPage=self._header_footer, onLaterPages=self._header_footer, canvasmaker=NumberedCanvas)
-	doc.build(elements)
+	try:
+		doc.build(elements)
+	except:
+		print("invalid inputs")
+
 
 main()
