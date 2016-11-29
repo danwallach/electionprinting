@@ -59,7 +59,11 @@ def header_footer(canvas, doc):
     # Header
     header = []
     header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
-    header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15 name="' + font_type + '">PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+    try:
+    	header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15 name="' + font_type + '">PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+    except:
+		print 'Error creating header. This font, ' + font_type + ', may not be allowed.'
+		return
     header = Table(header, colWidths=[inch*3, inch*5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), ('TEXTFONT', (0, 0), (1, 0), font_type), ('ALIGN',(1,0),(1,0),'RIGHT')])
 
     w, h = header.wrap(doc.width, doc.topMargin)
@@ -125,6 +129,7 @@ def print_pdfs(filename):
 			results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
 	except:
 		print("Unable to read Races file: "+ str(races))
+		return
 
 
 	#num_rows = math.ceil(len(results)/int(num_columns))
@@ -155,9 +160,13 @@ def print_pdfs(filename):
 			tot_h = 0
 			while tot_h < 500:
 				
-				race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
-				selection_name = Paragraph(results[candidate_index].selection, styleN)
-				party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
+				try:
+					race_name = Paragraph("<b>"+results[candidate_index].race_name+"</b>", styleN)
+					selection_name = Paragraph(results[candidate_index].selection, styleN)
+					party = Paragraph("<b>"+results[candidate_index].party+"</b>", style_right)
+				except:
+					print 'Error bolding text. This font may not be allowed, or it may not allow bolded text.'
+					return
 
 				race_data = [[race_name], [selection_name, party]]
 
