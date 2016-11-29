@@ -56,7 +56,7 @@ def header_footer(canvas, doc):
     # Header
     header = []
     header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
-    header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15>PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+    header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15 name="' + font_type + '">PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
     header = Table(header, colWidths=[inch*3, inch*5], style=[('FONTSIZE', (0, 0), (-1, -1), 50), ('TEXTFONT', (0, 0), (1, 0), font_type), ('ALIGN',(1,0),(1,0),'RIGHT')])
 
     w, h = header.wrap(doc.width, doc.topMargin)
@@ -96,6 +96,7 @@ def print_pdfs(filename):
 	races = config.get('Races', 'filename')
 
 	styleN.fontSize = font_size
+	styleN.fontName = font_type
 
 	page_type = letter
 	if page_size == 'Legal':
@@ -108,6 +109,7 @@ def print_pdfs(filename):
 
 	style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 	style_right.fontSize = font_size
+	style_right.fontName = font_type
 
 
 	results = []
@@ -151,7 +153,7 @@ def print_pdfs(filename):
 				race_data = [[race_name], [selection_name, party]]
 
 				race_table = Table(race_data, colWidths=[inch*7.5/ncols*24/32, inch*7.5/ncols*9/32], \
-					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3)])
+					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3), ('FONTNAME', (0, 0), (-1, -1), font_type)])
 				w,h = race_table.wrap(0,0)
 				tot_h += h
 				new_col.append([race_table])
