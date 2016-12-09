@@ -38,14 +38,21 @@ page_num = 0
 def header_footer(canvas, doc):
 	canvas.saveState()
 	# Footer
+	# THIS IS WHERE WE CONVERT SVG TO A "ReportLab Graphics Drawing"
 	barcode = svg2rlg(barcode_file_name)
+
+	# WHAT WE USED TO DO
 	#barcode = Image("barcode1.jpg")
+
+	# NOT SURE IF WE CAN DO THIS WITH A DRAWING
 	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
 	barcode.drawWidth = 2.25*inch
 	barcode.hAlign = 'LEFT'
 	barcode.vAlign = 'BOTTOM'
 
 	w, h = barcode.wrap(doc.width, doc.bottomMargin)
+
+	# WHAT WE USED TO DO "drawImage" WAS SOMETHING ELSE I TRIED
 	barcode.drawOn(canvas, doc.leftMargin + 15, h)
 	#canvas.drawImage(barcode, doc.leftMargin + 15, h)
 
@@ -144,7 +151,9 @@ def print_pdfs(filename, barcode_num):
 		data = [[]]
 
 		# generate barcode for this page
+		# THIS IS BARCODE STUFF I ADDED, SHOULD MAKE NEW BARCODE EACH TIME
 		ean = barcode.get('ean13', barcode_num + str(page_num))
+		page_num += 1
 		barcode_file_name = ean.save('ean13')
 
 		for i in range(ncols):
