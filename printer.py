@@ -1,5 +1,9 @@
 import sys
 import math
+import barcode
+from barcode.writer import ImageWriter
+from svglib.svglib import svg2rlg
+
 try:
 	from configparser import ConfigParser
 except:
@@ -29,11 +33,13 @@ styleN.alignment = TA_LEFT
 page_size = letter
 font_size = 7
 font_type = 'Times-Roman'
+page_num = 0
  
 def header_footer(canvas, doc):
 	canvas.saveState()
 	# Footer
-	barcode = Image("barcode1.jpg")
+	barcode = svg2rlg(barcode_file_name)
+	#barcode = Image("barcode1.jpg")
 	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
 	barcode.drawWidth = 2.25*inch
 	barcode.hAlign = 'LEFT'
@@ -41,6 +47,7 @@ def header_footer(canvas, doc):
 
 	w, h = barcode.wrap(doc.width, doc.bottomMargin)
 	barcode.drawOn(canvas, doc.leftMargin + 15, h)
+	#canvas.drawImage(barcode, doc.leftMargin + 15, h)
 
 	# Header
 	header = []
@@ -70,14 +77,14 @@ class SelectionInfo:
 
 def main():
 	usage = 'Command Syntax: \n\t./printer input_filename\nArguments:\n\tinput_filename\tfile to save results to\n'
-	if argv[1] == '-h' or len(argv) <= 1 or len(argv) > 2:
+	if argv[1] == '-h' or len(argv) <= 2 or len(argv) > 3:
 		print(usage)
 	else:
 		# print PDFs
-		print_pdfs(argv[1])
+		print_pdfs(argv[1], argv[2])
 
 
-def print_pdfs(filename):
+def print_pdfs(filename, barcode_num):
 	global font_size, font_type
 
 	config = ConfigParser()
@@ -136,6 +143,9 @@ def print_pdfs(filename):
 
 		data = [[]]
 
+		# generate barcode for this page
+		ean = barcode.get('ean13', barcode_num + str(page_num))
+		barcode_file_name = ean.save('ean13')
 
 		for i in range(ncols):
 			new_col = []
