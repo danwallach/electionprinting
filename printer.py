@@ -34,33 +34,51 @@ page_size = letter
 font_size = 7
 font_type = 'Times-Roman'
 page_num = 0
+barcode_num_saved = ''
  
 def header_footer(canvas, doc):
+	global page_num
+
 	canvas.saveState()
 	# Footer
 	# THIS IS WHERE WE CONVERT SVG TO A "ReportLab Graphics Drawing"
-	barcode = svg2rlg(barcode_file_name)
+
+	bar_num_page = barcode_num_saved + str(page_num)
+	print bar_num_page
+	page_num += 1
+
+	ean = barcode.get('upc', bar_num_page)
+
+
+	
+	barcode_file_name = ean.save('upc' + bar_num_page)
+	print barcode_file_name
+
+
+	barcode_drawing = svg2rlg(barcode_file_name)
+
+
 
 	# WHAT WE USED TO DO
 	#barcode = Image("barcode1.jpg")
 
 	# NOT SURE IF WE CAN DO THIS WITH A DRAWING
-	barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
-	barcode.drawWidth = 2.25*inch
-	barcode.hAlign = 'LEFT'
-	barcode.vAlign = 'BOTTOM'
+	# barcode.drawHeight = 2.25*inch*barcode.drawHeight / barcode.drawWidth
+	# barcode.drawWidth = 2.25*inch
+	# barcode.hAlign = 'LEFT'
+	# barcode.vAlign = 'BOTTOM'
 
-	w, h = barcode.wrap(doc.width, doc.bottomMargin)
+	w, h = barcode_drawing.wrap(doc.width, doc.bottomMargin)
 
 	# WHAT WE USED TO DO "drawImage" WAS SOMETHING ELSE I TRIED
-	barcode.drawOn(canvas, doc.leftMargin + 15, h)
+	barcode_drawing.drawOn(canvas, doc.leftMargin + 15, 15)
 	#canvas.drawImage(barcode, doc.leftMargin + 15, h)
 
 	# Header
 	header = []
 	header_style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 	try:
-		header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode, Paragraph('<b><font size=15 name="' + font_type + '">PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
+		header.append([Paragraph("<font size=12><b>Official Ballot</b></font><font size=8><br/>November 8, 2016 General Election<br/>Harris County, Texas Precinct 101A </font>", styleN), [barcode_drawing, Paragraph('<b><font size=15 name="' + font_type + '">PLACE THIS IN BALLOT BOX</font></b>', header_style_right)]])
 	except:
 		print('Error creating header. This font, ' + font_type + ', may not be allowed.')
 		return
@@ -83,16 +101,19 @@ class SelectionInfo:
 
 
 def main():
+	global barcode_num_saved
+
 	usage = 'Command Syntax: \n\t./printer input_filename\nArguments:\n\tinput_filename\tfile to save results to\n'
 	if argv[1] == '-h' or len(argv) <= 2 or len(argv) > 3:
 		print(usage)
 	else:
 		# print PDFs
-		print_pdfs(argv[1], argv[2])
+		barcode_num_saved = argv[2]
+		print_pdfs(argv[1])
 
 
-def print_pdfs(filename, barcode_num):
-	global font_size, font_type
+def print_pdfs(filename):
+	global font_size, font_type, barcode_file_name
 
 	config = ConfigParser()
 	config.read('config.cfg')
@@ -108,9 +129,9 @@ def print_pdfs(filename, barcode_num):
 	page_type = letter
 	if page_size == 'Legal':
 		page_type = legal
-		page_height = 700
+		page_height = 670
 	else:
-		page_height = 500
+		page_height = 470
 
 
 	ncols = int(num_columns)
@@ -138,7 +159,7 @@ def print_pdfs(filename, barcode_num):
 	candidate_index = 0
 
 
-	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-20*mm, id='normal2')
+	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-30*mm, id='normal2')
 	template = PageTemplate(id='header_footer', frames=frame, onPage=header_footer)
 	doc.addPageTemplates([template])
 
@@ -146,15 +167,14 @@ def print_pdfs(filename, barcode_num):
 	entries = 0
 	bigH = 0
 	#print("Adding {} entries".format(len(results)))
+
 	while entries < len(results):
 
 		data = [[]]
 
 		# generate barcode for this page
 		# THIS IS BARCODE STUFF I ADDED, SHOULD MAKE NEW BARCODE EACH TIME
-		ean = barcode.get('ean13', barcode_num + str(page_num))
-		page_num += 1
-		barcode_file_name = ean.save('ean13')
+		
 
 		for i in range(ncols):
 			new_col = []
