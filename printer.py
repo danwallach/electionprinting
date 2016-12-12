@@ -37,6 +37,13 @@ font_type = 'Times-Roman'
 page_num = 0
 barcode_num_saved = ''
  
+"""
+Create a header and fooer and add the barcode/ other information to it. 
+
+Inputs:
+	canvas	-- ReportLab canvas the canvas we are adding this header and footer to
+	doc 	-- ReportLab document the document this is all going onto
+"""
 def header_footer(canvas, doc):
 	global page_num
 
@@ -81,7 +88,9 @@ class SelectionInfo:
 		self.selection = selection
 		self.party = party
 
-
+"""
+Creates a PDF of the selected candidates for an Election. 
+"""
 def main():
 	global barcode_num_saved
 
@@ -101,20 +110,18 @@ def main():
 		print_pdfs(argv[1])
 
 
+"""
+Prints the PDF by reading in configurations, formatting the document, and adding the races
+column by column.
+
+Inputs:
+	filename -- name of output file
+"""
 def print_pdfs(filename):
 	global font_size, font_type, barcode_file_name
 
 	# read in configurations
-	config = ConfigParser()
-	config.read('config.cfg')
-	page_size = config.get('Paper', 'size')
-	font_size = config.getint('Fonts', 'font_size')
-	font_type = config.get('Fonts', 'font_type')
-	num_columns = config.get('Columns', 'num_columns')
-	races = config.get('Races', 'filename')
-
-	styleN.fontSize = font_size
-	styleN.fontName = font_type
+	page_size, num_columns, races = read_in_configuations()
 
 	# determine page size
 	page_type = letter
@@ -126,7 +133,6 @@ def print_pdfs(filename):
 
 
 	ncols = int(num_columns)
-
 	doc = SimpleDocTemplate(filename, pagesize=page_type, topMargin=15, bottomMargin=15, leftMargin=0, rightMargin=15)
 
 	# create styles
@@ -135,22 +141,10 @@ def print_pdfs(filename):
 	style_right.fontName = font_type
 
 	# read in races
-	results = []
-	try:
-		f = open(races, "r")
-		for item in f.readlines():
-			item = item.split(";")
-			if len(item) < 3:
-				continue
-			results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
-	except:
-		print("Unable to read Races file: "+ str(races))
-		return
-
-
-	candidate_index = 0
-
+	results = read_in_races(races)
+	
 	# Set up page
+	candidate_index = 0
 	frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-30*mm, id='normal2')
 	template = PageTemplate(id='header_footer', frames=frame, onPage=header_footer)
 	doc.addPageTemplates([template])
@@ -180,7 +174,7 @@ def print_pdfs(filename):
 
 				# Create race data list from those paragraph
 				race_data = [[race_name], [selection_name, party]]
-
+				
 				# form table from the race data information: 1 table per race that goes inside larger table
 				race_table = Table(race_data, colWidths=[inch*7.5/ncols*23/32, inch*7.5/ncols*10/32], \
 					style=[('SPAN',(0,0),(1,0)), ('LINEBELOW', (0,1), (1,1), 1, colors.black), ('FONTSIZE', (0, 0), (-1, -1), 3), ('FONTNAME', (0, 0), (-1, -1), font_type)])
@@ -190,7 +184,6 @@ def print_pdfs(filename):
 				candidate_index += 1
 				entries += 1
 
-				# we've added them all
 				if candidate_index > (len(results) - 1):
 					break
 
@@ -212,5 +205,53 @@ def print_pdfs(filename):
 	except:
 		print("Error building the document, unable to determine cause.")
 
+"""
+Read in configurations from config.cfg file. 
+
+Outputs:
+	page_size	-- String letter or legal
+	num_columns	-- int number of columns per page
+	races 		-- String filename of races
+"""
+def read_in_configuations():
+	global font_size, font_type
+
+	# read in configurations
+	config = ConfigParser()
+	config.read('config.cfg')
+	page_size = config.get('Paper', 'size')
+	font_size = config.getint('Fonts', 'font_size')
+	font_type = config.get('Fonts', 'font_type')
+	num_columns = config.get('Columns', 'num_columns')
+	races = config.get('Races', 'filename')
+
+	styleN.fontSize = font_size
+	styleN.fontName = font_type
+
+	return page_size, num_columns, races
+
+"""
+Read in configurations from config.cfg file. 
+
+Inputs:
+	races 		-- filename of races to read in
+Outputs:
+	results		-- list list of SelectionInfo
+"""
+def read_in_races(races):
+	results = []
+
+	try:
+		f = open(races, "r")
+		for item in f.readlines():
+			item = item.split(";")
+			if len(item) < 3:
+				continue
+			results.append(SelectionInfo(item[0], item[1], item[2].strip("\n")))
+	except:
+		print("Unable to read Races file: "+ str(races))
+		return
+
+	return results
 
 main()
