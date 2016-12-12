@@ -89,11 +89,15 @@ def main():
 	if argv[1] == '-h' or len(argv) <= 2 or len(argv) > 3:
 		print(usage)
 	else:
-		# print PDFs
+		#check barcode number
 		barcode_num_saved = argv[2]
 		if len(barcode_num_saved) >= 11:
 			print('\nERROR: Number for barcode is too long. Automatically truncating to 10 digitss. \nIf this is not inteded behavior please change barcode number.\n')
 			barcode_num_saved = barcode_num_saved[0:10]
+		if len(barcode_num_saved) < 10:
+			barcode_num_saved = barcode_num_saved.zfill(10)
+
+		# print PDFs
 		print_pdfs(argv[1])
 
 
