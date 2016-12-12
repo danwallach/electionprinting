@@ -94,7 +94,7 @@ Creates a PDF of the selected candidates for an Election.
 def main():
 	global barcode_num_saved
 
-	usage = 'Command Syntax: \n\t./printer input_filename\nArguments:\n\tinput_filename\tfile to save results to\n'
+	usage = 'Command Syntax: \n\t./printer output_filename barcode_num\nArguments:\n\toutput_filename\tfile to save results to\n\tbarcode_num\t10 digit number for barcode\n'
 	if argv[1] == '-h' or len(argv) <= 2 or len(argv) > 3:
 		print(usage)
 	else:
